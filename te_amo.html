@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TE AMO Matrix + Fuegos</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .central-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      color: #ff69b4;
+      text-shadow: 0 0 10px #ff69b4, 0 0 20px #ff69b4;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+
+    button {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #ff2d55;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff2d55;
+      z-index: 3;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrixCanvas"></canvas>
+  <div class="central-text" id="centralText">TE AMO</div>
+  <button id="toggleBtn">Pausar</button>
+
+  <!-- Audio local -->
+  <audio id="audio" src="Myke Towers - Experimento.mp3" autoplay loop></audio>
+
+  <script>
+    const canvas = document.getElementById("matrixCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const text = "TE AMO";
+    const fontSize = 26;
+    const columnSpacing = 200;
+    const columns = Math.floor(canvas.width / columnSpacing);
+    const drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#ff69b4";
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < drops.length; i++) {
+        const x = i * columnSpacing;
+        const y = drops[i] * fontSize;
+        ctx.fillText(text, x, y);
+        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+
+      drawFireworks();
+    }
+
+    let interval = setInterval(drawMatrix, 50);
+
+    // TEXTO CENTRAL
+    const central = document.getElementById('centralText');
+    setTimeout(() => {
+      central.style.opacity = '1';
+    }, 3000);
+
+    // BOTÓN PAUSA
+    const btn = document.getElementById('toggleBtn');
+    let paused = false;
+    const audio = document.getElementById('audio');
+    btn.addEventListener('click', () => {
+      paused = !paused;
+      btn.textContent = paused ? 'Reanudar' : 'Pausar';
+      if (paused) {
+        clearInterval(interval);
+        audio.pause();
+      } else {
+        interval = setInterval(drawMatrix, 50);
+        audio.play();
+      }
+    });
+
+    // RESIZE
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // FUEGOS ARTIFICIALES
+    let fireworks = [];
+
+    function Firework(x, y) {
+      this.x = x;
+      this.y = y;
+      this.particles = [];
+      const count = 30 + Math.random() * 30;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const speed = Math.random() * 4 + 2;
+        this.particles.push({
+          x: x,
+          y: y,
+          dx: Math.cos(angle) * speed,
+          dy: Math.sin(angle) * speed,
+          life: 100
+        });
+      }
+    }
+
+    Firework.prototype.update = function () {
+      this.particles.forEach(p => {
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.05;
+        p.life--;
+      });
+      this.particles = this.particles.filter(p => p.life > 0);
+    };
+
+    Firework.prototype.draw = function (ctx) {
+      this.particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff69b4";
+        ctx.fill();
+      });
+    };
+
+    function drawFireworks() {
+      if (Math.random() < 0.03) {
+        fireworks.push(new Firework(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height / 2
+        ));
+      }
+
+      fireworks.forEach(f => {
+        f.update();
+        f.draw(ctx);
+      });
+
+      fireworks = fireworks.filter(f => f.particles.length > 0);
+    }
+  </script>
+</body>
+</html>
+
+
